@@ -1,0 +1,79 @@
+﻿name: Build, deploy, and verify
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependencies
+        run: python -m pip install -r requirements.txt pytest
+
+      - name: Run application tests
+        run: python -m pytest -q
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.9.8'
+          terraform_wrapper: false
+
+      - name: Initialize Terraform
+        id: init
+        run: terraform init -input=false
+
+      - name: Check Terraform formatting and configuration
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+
+      - name: Build and deploy containers
+        run: terraform apply -auto-approve -input=false -no-color
+
+      - name: Wait for the application
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/health > /dev/null; then
+              echo "Application is ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Application did not become ready" >&2
+          docker ps -a
+          docker logs secure-web-app || true
+          docker logs secure-web-proxy || true
+          exit 1
+
+      - name: Show deployed containers and application response
+        run: |
+          docker ps
+          docker network inspect secure-web-network
+          curl --fail -i http://127.0.0.1:8080/health
+          echo
+          docker exec secure-web-proxy wget -qO- http://secure-web-app:5000/health
+          echo
+
+      - name: Run deployment regression tests
+        run: python -m pytest -o addopts= -m integration -q
+
+      - name: Check for Terraform drift
+        run: terraform plan -detailed-exitcode -input=false -no-color
+
+      - name: Destroy Terraform resources
+        if: always() && steps.init.outcome == 'success'
+        run: terraform destroy -auto-approve -input=false -no-color

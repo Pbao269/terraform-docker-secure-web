@@ -36,3 +36,7 @@ terraform destroy
 ```
 
 For development tests, install `requirements.txt` and pytest in your Python environment. Re-run both test commands after making changes; integration tests require a running deployment.
+
+## GitHub Actions
+
+A push to GitHub automatically starts the **Build, deploy, and verify** workflow; it can also be started manually from the Actions tab. A GitHub-hosted Linux runner builds the Flask image with Terraform, deploys both containers to its own Docker engine, runs the application and deployment tests, checks for Terraform drift, and destroys the resources. The deployment is temporary and exists only during the job. Open the workflow run to see the Terraform output, container status, health response, and test results. No self-hosted runner or deployment credentials are required.
