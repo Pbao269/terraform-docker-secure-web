@@ -2,7 +2,7 @@
 
 A small Flask weather app behind an Nginx reverse proxy. Search for a city to see current model-based weather, humidity, and wind. Weather data and location search are provided by [Open-Meteo](https://open-meteo.com/). An internet connection is needed for weather lookups; no API key is required for this noncommercial project.
 
-Terraform builds the Flask image and manages both containers on a private Docker network. Nginx forwards requests to Flask by container name and is the only service exposed to the host, at `127.0.0.1:8080`. The Nginx configuration is mounted read-only. This is a learning project, not a production security configuration.
+This project extends the earlier Terraform Secure Web Application assignment (Option 1: Nginx + Flask) with a weather lookup and GitHub Actions. Terraform builds the Flask image and manages both containers on a private Docker network. Nginx forwards requests to Flask by container name and is the only service exposed to the host, at `127.0.0.1:8080`. The Nginx configuration is mounted read-only. This is a learning project, not a production security configuration.
 
 ## Deploy and test locally
 
