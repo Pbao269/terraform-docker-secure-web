@@ -1,4 +1,4 @@
-﻿# Weather Lookup with Terraform and Docker
+# Weather Lookup with Terraform and Docker
 
 A small Flask weather app behind an Nginx reverse proxy. Search for a city to see current model-based weather, humidity, and wind. Weather data and location search are provided by [Open-Meteo](https://open-meteo.com/). An internet connection is needed for weather lookups; no API key is required for this noncommercial project.
 
@@ -19,12 +19,13 @@ Open http://localhost:8080 and search for a city. Include the region or country 
 
 ```sh
 python -m pytest -q
-python -m pytest -o addopts= -m integration -q
+python -m pytest -o addopts= -m "integration and not live_weather" -q
+python -m pytest -o addopts= -m live_weather -q -s
 terraform plan
 ```
 
-The first test command uses controlled weather-service responses; the second checks the deployed application and Docker networking. The final plan should report no changes. To remove the containers and network when finished, run `terraform destroy`.
+The first test command uses controlled weather-service responses; the second checks the deployed application and Docker networking. The live weather test performs a real Boston lookup through the deployed app and requires Open-Meteo to be reachable. The final plan should report no changes. To remove the containers and network when finished, run `terraform destroy`.
 
 ## GitHub Actions
 
-A push automatically starts the **Build, deploy, and verify** workflow; it can also be started manually from the Actions tab. A GitHub-hosted Linux runner builds the Flask image with Terraform, deploys both containers to its own Docker engine, runs the application and deployment tests, checks for Terraform drift, and destroys the resources. The deployment is temporary and exists only during the job. The run logs show the Terraform output, container status, health response, and test results. No self-hosted runner or deployment credentials are required.
+A push automatically starts the **Build, deploy, and verify** workflow; it can also be started manually from the Actions tab. A GitHub-hosted Linux runner builds the Flask image with Terraform, deploys both containers to its own Docker engine, runs the application and deployment tests, verifies a live weather lookup, checks for Terraform drift, and destroys the resources. The live weather check requires access to Open-Meteo and will fail if the service is unavailable or rate-limited. The deployment is temporary and exists only during the job. The run logs show the Terraform output, container status, health response, and test results. No self-hosted runner or deployment credentials are required.

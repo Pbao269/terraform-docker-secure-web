@@ -69,7 +69,10 @@ jobs:
           echo
 
       - name: Run deployment regression tests
-        run: python -m pytest -o addopts= -m integration -q
+        run: python -m pytest -o addopts= -m "integration and not live_weather" -q
+
+      - name: Verify live weather lookup
+        run: python -m pytest -o addopts= -m live_weather -q -s
 
       - name: Check for Terraform drift
         run: terraform plan -detailed-exitcode -input=false -no-color
